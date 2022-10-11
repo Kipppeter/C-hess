@@ -3,10 +3,13 @@
 #include <string.h>
 #include <ctype.h>
 #define SIZE 8
+#define NUM_SAVEDMOVES 100
 
 int board[SIZE][SIZE];
 int legalMoves[SIZE][SIZE];
 int whoseTurn;
+int madeMoves[2][NUM_SAVEDMOVES];
+int moveNumber;
 
 int Smallest(a, b)
 {
@@ -28,8 +31,8 @@ void init_board(int board[][SIZE])
     }
     for (i = 0; i < SIZE; i++)
     {
-		board[6][i] = 1;
-		board[1][i] = 7;
+		//board[6][i] = 1;
+		//board[1][i] = 7;
 	}
 
     board[0][0] = 8;
@@ -137,7 +140,7 @@ void buildBoard(int board[][SIZE])
 
 void move_piece(int board[][SIZE])
 {
-	int sX, sY, eX, eY, piece, i, j, anyLegalMoves;
+	int sX, sY, eX, eY, piece, i, anyLegalMoves;
 	int validMove = 0;
 	while(validMove == 0)
 	{
@@ -195,10 +198,33 @@ void move_piece(int board[][SIZE])
 	board[eX][eY] = board[sX][sY];
 	
 	board[sX][sY] = 0;
+	
+	// move saver
+	madeMoves[whoseTurn][moveNumber] = sY*1000+sX*100+eY*10+eX;
+	
+	// turn changer
 	if (whoseTurn == 0)
 		whoseTurn = 1;
 	else
 		whoseTurn = 0;
+		
+	switch(whoseTurn)
+	{
+		case 0:
+		{
+			printf("White's");
+			break;
+		}
+		case 1:
+		{
+			printf("Black's");
+			break;
+		}
+	}
+	printf(" turn %d \n", moveNumber);
+	
+	if(whoseTurn == 1)
+		moveNumber++;
 }
 
 int AllowedMoves( i, Y, X, piece)
@@ -220,9 +246,9 @@ int AllowedMoves( i, Y, X, piece)
 	// printf("piece: %d\n", piece); // debug
 	
 	// correct colour piece checker
-	if((whoseTurn == 0) && (piece < 6))
+	if((whoseTurn == 0) && (piece < 7))
 		return 3;
-	else if((whoseTurn == 1) && (piece > 5))
+	else if((whoseTurn == 1) && (piece > 6))
 		return 3;
 	
 	switch(piece)
@@ -310,7 +336,7 @@ int AllowedMoves( i, Y, X, piece)
 						minX = X-j;
 				}
 			}
-			printf("MINY %d\n MAXY %d\n MAXX %d\n MINX %d\n", minY, maxY, maxX, minX); // DEBUGER
+			// printf("MINY %d\n MAXY %d\n MAXX %d\n MINX %d\n", minY, maxY, maxX, minX); // DEBUGER
 			
 			// board zeroer
 			for(j = 0; j < SIZE; j++)
@@ -393,13 +419,13 @@ int AllowedMoves( i, Y, X, piece)
 			// board zeroer
 			for(j = 0; j < SIZE; j++)
 			{
-				if(j >= d1)
+				if(j > d1)
 					legalMoves[Y+j][X+j] = 0;
-				if(j >= d3)
+				if(j > d3)
 					legalMoves[Y-j][X-j] = 0;
-				if(j >= d2)
+				if(j > d2)
 					legalMoves[Y-j][X+j] = 0;
-				if(j >= d4)
+				if(j > d4)
 					legalMoves[Y+j][X-j] = 0;
 			}
 			
@@ -412,21 +438,21 @@ int AllowedMoves( i, Y, X, piece)
 		case 4:
 		{
 			knight:
-			if((X+2 < SIZE) && (Y+1 < SIZE) && (board[Y+1][X+2] == 0))
+			if((X+2 < SIZE) && (Y+1 < SIZE))
 				legalMoves[Y+1][X+2] = 1;
-			if((X+2 < SIZE) && (Y-1 >= 0) && (board[Y-1][X+2] == 0))
+			if((X+2 < SIZE) && (Y-1 >= 0))
 				legalMoves[Y-1][X+2] = 1;
-			if((X-2 >= 0) && (Y+1 < SIZE) && (board[Y+1][X-2] == 0))
+			if((X-2 >= 0) && (Y+1 < SIZE))
 				legalMoves[Y+1][X-2] = 1;
-			if((X-2 >= 0) && (Y-1 >= 0) && (board[Y-1][X-2] == 0))
+			if((X-2 >= 0) && (Y-1 >= 0))
 				legalMoves[Y-1][X-2] = 1;
-			if((Y+2 < SIZE) && (X+1 < SIZE) && (board[Y+2][X+1] == 0))
+			if((Y+2 < SIZE) && (X+1 < SIZE))
 				legalMoves[Y+2][X+1] = 1;
-			if((Y+2 < SIZE) && (X-1 >= 0) && (board[Y+2][X-1] == 0))
+			if((Y+2 < SIZE) && (X-1 >= 0))
 				legalMoves[Y+2][X-1] = 1;
-			if((Y-2 >= 0) && (X+1 < SIZE) && (board[Y-2][X+1] == 0))
+			if((Y-2 >= 0) && (X+1 < SIZE))
 				legalMoves[Y-2][X+1] = 1;
-			if((Y-2 >= 0) && (X-1 >= 0) && (board[Y-2][X-1] == 0))
+			if((Y-2 >= 0) && (X-1 >= 0))
 				legalMoves[Y-2][X-1] = 1;
 			break;
 		}
@@ -504,9 +530,9 @@ int AllowedMoves( i, Y, X, piece)
 		{
 			for(j = 0; j < SIZE; j++)
 			{
-				if((board[i][j] > 5) && (whoseTurn == 0))
+				if((board[i][j] > 6) && (whoseTurn == 0))
 					legalMoves[i][j] = 0;
-				else if((board[i][j] < 6) && (whoseTurn == 1) && (board[i][j] != 0))
+				else if((board[i][j] < 7) && (whoseTurn == 1) && (board[i][j] != 0))
 					legalMoves[i][j] = 0;
 			}
 		}
@@ -550,12 +576,12 @@ int kingDeadCheck(void)
 	}
 	if (bK == 0)
 	{
-		printf("White wins!");
+		printf("White wins!\n");
 		return 0;
 	}
 	else if (wK == 0)
 	{
-		printf("Black wins!");
+		printf("Black wins!\n");
 		return 0;
 	}
 	return 1;
@@ -563,8 +589,9 @@ int kingDeadCheck(void)
 
 int main(void)
 {
+	int i;
+	moveNumber = 0;
 	init_board(board);
-	board[3][3] = 2;
 	buildBoard(board);
 	whoseTurn = 0;
 	while(1)
@@ -574,5 +601,7 @@ int main(void)
 		if(kingDeadCheck() == 0)
 			break;
 	}
+	for(i = 0; i < NUM_SAVEDMOVES; i++)
+		printf("Move %4d: %5d %5d\n", i+1, madeMoves[0][i], madeMoves[1][i]);
 	return 0;
 }
