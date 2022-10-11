@@ -5,6 +5,7 @@
 #define SIZE 8
 
 int board[SIZE][SIZE];
+int legalMoves[SIZE][SIZE];
 
 void init_board(int board[][SIZE])
 {
@@ -128,24 +129,222 @@ void buildBoard(int board[][SIZE])
 
 void move_piece(int board[][SIZE])
 {
-	int sX, sY, eX, eY;
-	printf("Insert starting X-coordinate\n");
-	scanf("%2d", &sY);
-	printf("Insert starting Y-coordinate\n");
-	scanf("%2d", &sX);
-	printf("Insert ending X-coordinate\n");
-	scanf("%2d", &eY);
-	printf("Insert ending Y-coordinate\n");
-	scanf("%2d", &eX);
+	int sX, sY, eX, eY, piece, i, j;
+	int validMove = 0;
+	while(validMove == 0)
+	{
+		start:
+		printf("Insert starting X-coordinate\n");
+		scanf("%2d", &sY);
+		printf("Insert starting Y-coordinate\n");
+		scanf("%2d", &sX);
 	
-	sX = sX-1;
-	sY = sY-1;
-	eX = eX-1;
-	eY = eY-1; 
-
+		sX = sX-1;
+		sY = sY-1;
+		
+		piece = board[sX][sY];
+		printf("\nCurrent piece: %d\n", piece); // bugstomper
+		if (piece == 0)
+		{
+			printf("Empty spaces can not move!\n");
+			goto start;
+		}
+	
+		 
+		
+		AllowedMoves(i, sX, sY, piece);
+		
+		printf("DEBUG legalMoves table:\n");
+		for(i = 0; i < SIZE; i++)
+		{
+			for(j = 0; j < SIZE; j++)
+				printf("%d ", legalMoves[7-i][j]);
+			printf("\n");
+		}
+		printf("\n");
+		
+		printf("Insert ending X-coordinate\n");
+		scanf("%2d", &eY);
+		printf("Insert ending Y-coordinate\n");
+		scanf("%2d", &eX);
+		
+		eX = eX-1;
+		eY = eY-1;
+		
+		validMove = legalMoves[eX][eY];
+		if(validMove == 0)
+			printf("\n\nError! Invalid move!\n");
+	}
 	board[eX][eY] = board[sX][sY];
 	
 	board[sX][sY] = 0;
+}
+
+int AllowedMoves( i, Y, X, piece)
+{
+	int n, j;
+	int minX, maxX, minY, maxY;
+	for(n = 0; n < SIZE; n++)
+	{
+		for(j = 0; j < SIZE; j++)
+			legalMoves[n][j] = 0;
+	}
+	
+	// printf("piece: %d\n", piece); // debug
+	
+	switch(piece)
+	{
+		case 1:
+		{
+			if(Y == 6) // check if 2 moves can be made
+			{
+				legalMoves[Y-2][X] = 1;
+			}
+			legalMoves[Y-1][X] = 1;
+			if(board[Y-1][X] != 0) // check if anything in the way
+			{
+				legalMoves[Y-2][X] = 0;
+				legalMoves[Y-1][X] = 0;
+			}
+			// check for takes
+			if((X + 1 < SIZE) && (board[Y-1][X+1] < 6) && (board[Y-1][X+1] > 0))
+				legalMoves[Y-1][X+1] = 1;
+			if((X - 1 >= 0) && (board[Y-1][X-1] < 6) && (board[Y-1][X-1] > 0))
+				legalMoves[Y-1][X-1] = 1;
+			break;
+		}
+		case 7:
+		{
+			if(Y == 1) // check if 2 moves can be made
+			{
+				legalMoves[Y+2][X] = 1;
+			}
+			legalMoves[Y+1][X] = 1;
+			
+			if(board[Y+1][X] != 0) // check if anything in the way
+			{
+				legalMoves[Y+2][X] = 0;
+				legalMoves[Y+1][X] = 0;
+			}
+			// check for takes
+			if((X + 1 < SIZE) && (board[Y+1][X+1] < 6) && (board[Y+1][X+1] > 0))
+				legalMoves[Y+1][X+1] = 1;
+			if((X - 1 >= 0) && (board[Y+1][X-1] < 6) && (board[Y+1][X-1] > 0))
+				legalMoves[Y+1][X-1] = 1;
+			break;
+		}
+		case 2:
+		{
+			rook:
+			// add check to see if pieces in the way
+			for(j = 0; j < SIZE; j++)
+			{
+				legalMoves[Y][j] = 1;
+				legalMoves[j][X] = 1;
+			}
+			break;
+		}
+		case 8:
+		{
+			goto rook;
+		}
+		case 3:
+		{
+			bishop:
+			for(j = 0; j < SIZE; j++)
+			{
+				while((X+j < SIZE) && (Y+j < SIZE))
+					legalMoves[Y+j][X+j] = 1;
+				while((X+j >= 0) && (Y+j >= 0))
+					legalMoves[Y-j][X-j] = 1;
+			}
+			break;
+		}
+		case 9:
+		{
+			goto bishop;
+		}
+		case 4:
+		{
+			if((X+2 < SIZE) && (Y+1 < SIZE))
+				legalMoves[Y+1][X+2] = 1;
+			if((X+2 < SIZE) && (Y-1 >= 0))
+				legalMoves[Y-1][X+2] = 1;
+			if((X-2 >= 0) && (Y+1 < SIZE))
+				legalMoves[Y+1][X-2] = 1;
+			if((X-2 >= 0) && (Y-1 >= 0))
+				legalMoves[Y-1][X+2] = 1;
+			if((Y+2 < SIZE) && (X+1 < SIZE))
+				legalMoves[Y+2][X+1] = 1;
+			if((Y+2 < SIZE) && (X-1 >= 0))
+				legalMoves[Y+2][X-1] = 1;
+			if((Y-2 >= 0) && (X+1 < SIZE))
+				legalMoves[Y-2][X+1] = 1;
+			if((Y-2 >= 0) && (X-1 >= 0))
+				legalMoves[Y-2][X-1] = 1;
+			break;
+		}
+		case 5:
+		{
+			queen:
+			for(j = 0; j < SIZE; j++)
+			{
+				while((X+j < SIZE) && (Y+j < SIZE))
+					legalMoves[Y+j][X+j] = 1;
+				while((X+j >= 0) && (Y+j >= 0))
+					legalMoves[Y-j][X-j] = 1;
+			}
+			for(j = 0; j < SIZE; j++)
+			{
+				legalMoves[Y][j] = 1;
+				legalMoves[j][X] = 1;
+			}
+			break;
+		}
+		case 11:
+		{
+			goto queen;
+		}
+		case 6:
+		{
+			king:
+			for(j = Y - 1; j <= Y + 1; j++)
+			{
+				for(n = X - 1; n <= X + 1; n++)
+					legalMoves[j][n] = 1;
+			}
+			legalMoves[Y][X] = 0;
+			if(X - 1 < 0)
+			{
+					legalMoves[Y][X-1] = 0;
+					legalMoves[Y-1][X-1] = 0;
+					legalMoves[Y+1][X-1] = 0;
+			}
+			if(X + 1 > SIZE)
+			{
+				legalMoves[Y][X+1] = 0;
+				legalMoves[Y-1][X+1] = 0;
+				legalMoves[Y+1][X+1] = 0;
+			}
+			if(Y - 1 < 0)
+			{
+					legalMoves[Y-1][X] = 0;
+					legalMoves[Y-1][X-1] = 0;
+					legalMoves[Y-1][X+1] = 0;
+			}
+			if(Y + 1 > SIZE)
+			{
+				legalMoves[Y+1][X] = 0;
+				legalMoves[Y+1][X+1] = 0;
+				legalMoves[Y+1][X-1] = 0;
+			}
+			break;
+		}
+		case 12:
+		{
+			goto king;
+		}
+	}
 }
 
 int kingDeadCheck(void)
@@ -187,7 +386,5 @@ int main(void)
 		if(kingDeadCheck() == 0)
 			break;
 	}
-	
-	
 	return 0;
 }
