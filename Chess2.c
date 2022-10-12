@@ -5,11 +5,101 @@
 #define SIZE 8
 #define NUM_SAVEDMOVES 100
 
+// Global values
+
 int board[SIZE][SIZE];
 int legalMoves[SIZE][SIZE];
 int whoseTurn;
 int madeMoves[2][NUM_SAVEDMOVES];
 int moveNumber;
+
+// Functions
+
+void LegalMoves(void);
+int IsCheck(void);
+int Smallest( a, b);
+void init_board(void);
+void buildBoard(void);
+void move_piece(void);
+int AllowedMoves( whoChecks, Y, X, piece);
+int kingDeadCheck(void);
+
+
+int main(void)
+{
+	int i, check;
+	moveNumber = 0;
+	init_board();
+	buildBoard();
+	whoseTurn = 0;
+	while(1)
+	{
+		move_piece();
+		
+		// check checker
+		check = IsCheck();
+		if(check == 1)
+			printf("The black king is in check!\n");
+		else if(check == 2)
+			printf("The white king is in check!\n");
+		
+		// board builder
+		buildBoard();
+		
+		// check to see if kings exist
+		if(kingDeadCheck() == 0)
+			break;
+		// turn changer
+		if (whoseTurn == 0)
+			whoseTurn = 1;
+		else
+			whoseTurn = 0;
+	}
+	for(i = 0; i < NUM_SAVEDMOVES; i++)
+		printf("Move %4d: %5d %5d\n", i+1, madeMoves[0][i], madeMoves[1][i]);
+	return 0;
+}
+
+void LegalMoves(void)
+{
+	int i, j;
+	printf("legalMoves table:\n");
+	for(i = 0; i < SIZE; i++)
+	{
+		for(j = 0; j < SIZE; j++)
+			printf("%d ", legalMoves[7-i][j]);
+		printf("%d\n", 8 - i);
+	}
+	printf("1 2 3 4 5 6 7 8\n");
+}
+
+int IsCheck(void)
+{
+	int i, j;
+
+	for(i = 0; i < SIZE; i++)
+	{
+		for(j = 0; j < SIZE; j++)
+		{
+			AllowedMoves(whoseTurn, i, j, board[i][j]);
+			switch(whoseTurn)
+			{
+				case 0:
+				{
+					if((legalMoves[i][j] == 1) && (board[i][j] == 6))
+						return 1;
+				}
+				case 1:
+				{
+					if((legalMoves[i][j] == 1) && (board[i][j] == 12))
+						return 2;
+				}
+			}
+		}
+	}
+	
+	return 0;
+}
 
 int Smallest(a, b)
 {
@@ -18,7 +108,7 @@ int Smallest(a, b)
 	return b;
 }
 
-void init_board(int board[][SIZE])
+void init_board(void)
 {
     int i, j;
 
@@ -35,26 +125,26 @@ void init_board(int board[][SIZE])
 		//board[1][i] = 7;
 	}
 
-    board[0][0] = 8;
-    board[0][1] = 10;
-    board[0][2] = 9;
-    board[0][3] = 11;
+    //board[0][0] = 8;
+    //board[0][1] = 10;
+    //board[0][2] = 9;
+    //board[0][3] = 11;
     board[0][4] = 12;
-    board[0][5] = 9;
-    board[0][6] = 10;
-    board[0][7] = 8;
+    //board[0][5] = 9;
+    //board[0][6] = 10;
+    //board[0][7] = 8;
 
-    board[7][0] = 2;
-    board[7][1] = 4;
-    board[7][2] = 3;
-    board[7][3] = 5;
+    //board[7][0] = 2;
+    //board[7][1] = 4;
+    //board[7][2] = 3;
+    //board[7][3] = 5;
     board[7][4] = 6;
-    board[7][5] = 3;
-    board[7][6] = 4;
-    board[7][7] = 2;
+    //board[7][5] = 3;
+    //board[7][6] = 4;
+    //board[7][7] = 2;
 }
 
-void buildBoard(int board[][SIZE])
+void buildBoard(void)
 {
 	int i, j, a;
 	for(i = SIZE - 1; i >= 0; i--)
@@ -138,9 +228,9 @@ void buildBoard(int board[][SIZE])
 	printf("1 2 3 4 5 6 7 8 \n");
 }
 
-void move_piece(int board[][SIZE])
+void move_piece(void)
 {
-	int sX, sY, eX, eY, piece, i, anyLegalMoves;
+	int sX, sY, eX, eY, piece, anyLegalMoves, check;
 	int validMove = 0;
 	while(validMove == 0)
 	{
@@ -149,7 +239,8 @@ void move_piece(int board[][SIZE])
 		scanf("%2d", &sY);
 		printf("Insert starting Y-coordinate\n");
 		scanf("%2d", &sX);
-	
+		
+		// Human - computer translation
 		sX = sX-1;
 		sY = sY-1;
 		
@@ -162,7 +253,7 @@ void move_piece(int board[][SIZE])
 		}
 	
 		 
-		anyLegalMoves = AllowedMoves(i, sX, sY, piece);
+		anyLegalMoves = AllowedMoves(whoseTurn, sX, sY, piece);
 		if(anyLegalMoves == 0)
 		{
 			printf("This piece can not move!\n");
@@ -188,10 +279,25 @@ void move_piece(int board[][SIZE])
 		printf("Insert ending Y-coordinate\n");
 		scanf("%2d", &eX);
 		
+		// Human - computer translation
 		eX = eX-1;
 		eY = eY-1;
 		
 		validMove = legalMoves[eX][eY];
+			
+		// move-out-of-check tester
+		check = IsCheck();
+		if((check == 1) && (whoseTurn == 1))
+		{
+			printf("You would still be in check!\n");
+			validMove = 0;
+		}
+		else if((check == 2) && (whoseTurn == 0))
+		{
+			printf("You would still be in check!\n");
+			validMove = 0;
+		}
+		
 		if(validMove == 0)
 			printf("\n\nError! Invalid move!\n");
 	}
@@ -202,12 +308,9 @@ void move_piece(int board[][SIZE])
 	// move saver
 	madeMoves[whoseTurn][moveNumber] = sY*1000+sX*100+eY*10+eX;
 	
-	// turn changer
-	if (whoseTurn == 0)
-		whoseTurn = 1;
-	else
-		whoseTurn = 0;
-		
+	if(whoseTurn == 1)
+		moveNumber++;
+			
 	switch(whoseTurn)
 	{
 		case 0:
@@ -223,13 +326,11 @@ void move_piece(int board[][SIZE])
 	}
 	printf(" turn %d \n", moveNumber);
 	
-	if(whoseTurn == 1)
-		moveNumber++;
 }
 
-int AllowedMoves( i, Y, X, piece)
+int AllowedMoves( whoChecks, Y, X, piece)
 {
-	int n, j, anyLegalMoves;
+	int i, n, j, anyLegalMoves;
 	int minX = 0;
 	int maxX = 7;
 	int minY = 0;
@@ -530,21 +631,14 @@ int AllowedMoves( i, Y, X, piece)
 		{
 			for(j = 0; j < SIZE; j++)
 			{
-				if((board[i][j] > 6) && (whoseTurn == 0))
+				if((board[i][j] > 6) && (whoChecks == 0))
 					legalMoves[i][j] = 0;
-				else if((board[i][j] < 7) && (whoseTurn == 1) && (board[i][j] != 0))
+				else if((board[i][j] < 7) && (whoChecks == 1) && (board[i][j] != 0))
 					legalMoves[i][j] = 0;
 			}
 		}
 	
-	printf("legalMoves table:\n");
-		for(i = 0; i < SIZE; i++)
-		{
-			for(j = 0; j < SIZE; j++)
-				printf("%d ", legalMoves[7-i][j]);
-			printf("%d\n", 8 - i);
-		}
-		printf("1 2 3 4 5 6 7 8\n");
+	LegalMoves();
 	// check if any legal moves with this piece
 	anyLegalMoves = 0;
 	for(i = 0; SIZE > i; i++)
@@ -587,21 +681,4 @@ int kingDeadCheck(void)
 	return 1;
 }
 
-int main(void)
-{
-	int i;
-	moveNumber = 0;
-	init_board(board);
-	buildBoard(board);
-	whoseTurn = 0;
-	while(1)
-	{
-		move_piece(board);
-		buildBoard(board);
-		if(kingDeadCheck() == 0)
-			break;
-	}
-	for(i = 0; i < NUM_SAVEDMOVES; i++)
-		printf("Move %4d: %5d %5d\n", i+1, madeMoves[0][i], madeMoves[1][i]);
-	return 0;
-}
+
